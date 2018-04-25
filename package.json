@@ -1,0 +1,23 @@
+{
+  "name": "zip-download",
+  "version": "0.0.1",
+  "description": "This can be used to download multiple files bundled into one or more zip files",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ghostCoder/zip-download.git"
+  },
+  "keywords": [
+    "download",
+    "zip"
+  ],
+  "author": "Naman Anand <naman.anand.potter@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ghostCoder/zip-download/issues"
+  },
+  "homepage": "https://github.com/ghostCoder/zip-download#readme"
+}
