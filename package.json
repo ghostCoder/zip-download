@@ -1,6 +1,6 @@
 {
   "name": "zip-downloader",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "This can be used to download multiple files bundled into one or more zip files",
   "main": "lib/downloader.js",
   "scripts": {
