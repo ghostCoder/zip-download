@@ -4,3 +4,5 @@
 .gitattributes
 .gitignore
 .npmignore
+test
+internals

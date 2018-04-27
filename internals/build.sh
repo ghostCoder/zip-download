@@ -1,0 +1,1 @@
+babel ./src --out-dir ./lib --copy-files --ignore '**/*.spec.js','**/*.mock.js' $1

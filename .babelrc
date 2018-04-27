@@ -1,0 +1,16 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "targets": {
+          "browsers": ["> 4%", "ie 11", "safari 8"],
+          "node": "current"
+        },
+        "useBuiltIns": false,
+      }
+    ],
+    "stage-2"
+  ],
+  "plugins": ["transform-runtime"]
+}
