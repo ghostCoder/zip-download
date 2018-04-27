@@ -1,8 +1,10 @@
 .idea
+.babelrc
 .eslintrc
 .npmrc
 .gitattributes
 .gitignore
 .npmignore
+src
 test
 internals

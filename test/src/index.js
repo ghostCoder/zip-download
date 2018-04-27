@@ -1,5 +1,5 @@
 import {SMALL_ASSETS} from './assets';
-import downloader from '../../lib/downloader';
+import downloader from '../../src/downloader';
 
 const options = {
   downloadFileName: 'folder',
