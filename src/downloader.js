@@ -62,10 +62,10 @@ const downloadAssets = function (assets, {downloadFileName, maxZIPSize, statusCa
     var saveFiles = getSaveFilesFn();
     var resolvePromise = function () {
       onComplete({
-        downloadedAssetCount: downloadedAssetCount,
-        failedAssetCount: failedAssetCount,
-        largeFileCount: largeFileCount,
-        downloadedZIPFileCount: downloadedZIPFileCount > 0 ? ++downloadedZIPFileCount : downloadedZIPFileCount,
+        numberOfDownloadedAssets: downloadedAssetCount,
+        numberOfFailedAssets: failedAssetCount,
+        numberOfLargeUnZippedAssets: largeFileCount,
+        numberOfDownloadedZIPFiles: downloadedZIPFileCount > 0 ? ++downloadedZIPFileCount : downloadedZIPFileCount,
         failedAssetList: failedAssetList,
       });
     };

@@ -1,5 +1,5 @@
-import {SMALL_ASSETS} from './assets';
-import downloader from '../../src/downloader';
+import {ASSETS} from './assets';
+import downloader from '../../src/downloader'; //'zip-downloader'
 
 const options = {
   downloadFileName: 'folder',
@@ -11,4 +11,4 @@ const options = {
   },
 };
 
-document.getElementById("downloadBtn").addEventListener("click", downloader.bind(null, SMALL_ASSETS, options));
+document.getElementById("downloadBtn").addEventListener("click", downloader.bind(null, ASSETS, options));
