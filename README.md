@@ -7,15 +7,21 @@ You can give zip-downloader an array of assets to download and it can download t
 
 ## Options that you can pass 
 
-**downloadFileName (String)** - Name of the zipped file downloaded (optional)
+**downloadFileName (String)** - Name of the zipped file downloaded.
 
-**maxZIPSize (Integer)** - Maximum size of the zip file downloaded. if total downloaded file size increases this, it will be split into multiple zips. (default, 2GB)
+Default: `zipped_files`
 
-**downloadBigFiles (Boolean)** - If false, files greater than maxZIPSize are not downloaded. If true, those files are downloaded separately. (default, true)
+**maxZIPSize (Integer)** - Maximum size of the zip file downloaded. If total downloaded file size increases this, it will be split into multiple zips.  
 
-**statusCallback (Function)** - This is callback is called continuously to update the download status. It is passed the count of downloaded assets till that momemt.
+Default: `2000000000` (2GB). The maximum possible value for `maxZIPSize` is 2GB as of now.
 
-**onComplete (Function)** - This is called on completion of the download. When it is called, it is passed a summary of the download. That object contains - 
+**downloadBigFiles (Boolean)** - If false, files greater than `maxZIPSize` are not downloaded. If true, those files are downloaded separately. 
+
+Default: `true` 
+
+**statusCallback (Function)** - This function is called whenever the download status changes for any file being downloaded. It can be used to update the download status. It is passed the count of downloaded assets till that moment.
+
+**onComplete (Function)** - This is called on completion of the download. When it is called, it is passed a summary object of the download. That object contains - 
 
 * numberOfDownloadedAssets
 * numberOfFailedAssets
@@ -25,7 +31,7 @@ You can give zip-downloader an array of assets to download and it can download t
  
 
 
-## Usage example 
+## Usage example  
                  
 
 ```javascript
@@ -57,3 +63,10 @@ var options = {
 downloader(assets, options);
 
 ```
+
+
+## Limits
+Using this we can only download zip files of maximum 2GB. This is a limitation as of now. But we can work towards fixing it.
+
+## License
+[MIT](./LICENSE)
