@@ -9,7 +9,7 @@ export const getAssetFileName = (assetName, assetSrc) => {
   let name = assetName ? assetName.trim() : getNameFromUrl(assetSrc);
   const extension = getExtensionFromUrl(assetSrc);
   if (extension !== getExtension(name)) {
-    name = name + extension;
+    name = `${name}${extension}`;
   }
   return name.replace(/\//g, ' ');
 };
@@ -17,14 +17,41 @@ export const getAssetFileName = (assetName, assetSrc) => {
 
 export const getIndexedFileName = (downloadFileName, index) => {
   if (index > 0) {
-    downloadFileName = downloadFileName + '_' + index;
+    downloadFileName = `${downloadFileName}_${index}`;
   }
   return downloadFileName;
 };
 
 export const numeriseFileName = (fileName, num) => {
   const extension = getExtension(fileName),
-    fileNameMinusExtention = fileName.replace(/\.[^/.]+$/, "");
+    fileNameMinusExtension = fileName.replace(/\.[^/.]+$/, "");
 
-  return fileNameMinusExtention + '_' + num + extension;
+  return `${fileNameMinusExtension}_${num}${extension}`;
+};
+
+export const queue = (func, waitTime) => {
+  var funcQueue = [];
+  var isWaiting;
+
+  var executeFunc = function (params) {
+    isWaiting = true;
+    func(params);
+    setTimeout(play, waitTime);
+  };
+
+  var play = function () {
+    isWaiting = false;
+    if (funcQueue.length) {
+      var params = funcQueue.shift();
+      executeFunc(params);
+    }
+  };
+
+  return function (params) {
+    if (isWaiting) {
+      funcQueue.push(params);
+    } else {
+      executeFunc(params);
+    }
+  }
 };

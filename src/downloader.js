@@ -1,126 +1,96 @@
 import JSZip from 'jszip';
 import FileSaver from 'file-saver';
-
-import {getExtension, getExtensionFromUrl, getAssetFileName, getIndexedFileName, numeriseFileName} from './util';
 import fetcher from './fetcher';
+import {getExtension, getExtensionFromUrl, getAssetFileName, getIndexedFileName, numeriseFileName, queue} from './util';
 
 
-const getSaveFilesFn = function () { //function calls queued to execute once in 1 sec because of lib issue.
-  var callQueue = [];
-  var isPaused;
-  var callSaveAs = function (content, downloadFileName) {
-    isPaused = true;
-    FileSaver.saveAs(content, downloadFileName);
-    setTimeout(play, 1000);
-  };
+const saveFile = params => FileSaver.saveAs(params.content, params.downloadFileName);
 
-  var play = function () {
-    isPaused = false;
-    if (callQueue.length) {
-      var params = callQueue.shift();
-      callSaveAs(params.content, params.downloadFileName);
-    }
-  };
+const saveAsZip = (assetData, downloadFileName, queuedSaveFile, cb) => {
+  const zip = new JSZip();
+  const folder = zip.folder(downloadFileName);
 
-  return function (params) {
-    if (isPaused) {
-      callQueue.push(params);
-    } else {
-      callSaveAs(params.content, params.downloadFileName);
-    }
-  }
-};
-
-const saveAsZip = function (assetData, downloadFileName, saveFiles, cb) {
-  var zip = new JSZip();
-  var folder = zip.folder(downloadFileName);
-
-  for (var i = 0; i < assetData.length; i++) {
+  for (let i = 0; i < assetData.length; i++) {
     folder.file(assetData[i].asset.name, assetData[i].result, { base64: false });
   }
 
   zip.generateAsync({ type: "blob" })
-    .then(function (content) {
-      saveFiles({
+    .then(content => {
+      queuedSaveFile({
         content: content,
-        downloadFileName: downloadFileName + '.zip'
+        downloadFileName: `${downloadFileName}.zip`,
       });
       cb && cb();
     });
 };
 
-const downloadAssets = function (assets, {downloadFileName, maxZIPSize, statusCallback, onComplete}) {
+const downloadAssets = (assets, {downloadFileName, maxZIPSize, statusCallback, onComplete}) => {
+  const assetCount = assets.length;
+  const failedAssetList = [];
+  const queuedSaveFile = queue(saveFile, 1000); //function calls queued to execute once in 1 sec because of lib issue.
+  let assetsToSave = [];
+  let numberOfDownloadedAssets = 0;
+  let downloadedZIPFileCount = 0;
+  let numberOfFailedAssets = 0;
+  let numberOfLargeUnZippedAssets = 0;
+  let downloadedAssetSize = 0;
 
-    var assetCount = assets.length;
-    var downloadedAssetCount = 0;
-    var downloadedZIPFileCount = 0;
-    var failedAssetCount = 0;
-    var largeFileCount = 0;
-    var downloadedAssetSize = 0;
-    var failedAssetList = [];
-    var assetsToSave = [];
-    var saveFiles = getSaveFilesFn();
-    var resolvePromise = function () {
-      onComplete({
-        numberOfDownloadedAssets: downloadedAssetCount,
-        numberOfFailedAssets: failedAssetCount,
-        numberOfLargeUnZippedAssets: largeFileCount,
-        numberOfDownloadedZIPFiles: downloadedZIPFileCount > 0 ? ++downloadedZIPFileCount : downloadedZIPFileCount,
-        failedAssetList: failedAssetList,
-      });
-    };
+  const resolvePromise = () => onComplete({
+    numberOfDownloadedAssets,
+    numberOfFailedAssets,
+    numberOfLargeUnZippedAssets,
+    failedAssetList,
+    numberOfDownloadedZIPFiles: downloadedZIPFileCount > 0 ? ++downloadedZIPFileCount : downloadedZIPFileCount,
+  });
 
-    var testAndSave = function (savedAsset) {
-      if (savedAsset) { //download success
-        const assetSize = savedAsset.result.byteLength;
-        if (downloadedAssetSize + assetSize > maxZIPSize) {
-          saveAsZip(assetsToSave, getIndexedFileName(downloadFileName, downloadedZIPFileCount), saveFiles);
-          downloadedZIPFileCount++;
-          assetsToSave = [savedAsset];
-          downloadedAssetSize = assetSize;
-        } else {
-          assetsToSave.push(savedAsset);
-          downloadedAssetSize = downloadedAssetSize + assetSize;
-        }
-      }
-
-      if ((downloadedAssetCount + failedAssetCount) === assetCount) {//check for asset download completion
-        if (assetsToSave.length) {
-          saveAsZip(assetsToSave, getIndexedFileName(downloadFileName, downloadedZIPFileCount), saveFiles, resolvePromise);
-        } else {
-          resolvePromise();
-        }
-      }
-    };
-
-    var onSuccess = function (asset, result) {
-      var savedAssetInfo;
-      statusCallback(++downloadedAssetCount);
-
-      if (result.byteLength > maxZIPSize) { //downloading separately because of 2gb limit
-        ++largeFileCount;
-        saveFiles({
-          content: new Blob([result]),
-          downloadFileName: asset.name
-        });
+  const testAndSave = savedAsset => {
+    if (savedAsset) { //download success
+      const assetSize = savedAsset.result.byteLength;
+      if (downloadedAssetSize + assetSize > maxZIPSize) {
+        saveAsZip(assetsToSave, getIndexedFileName(downloadFileName, downloadedZIPFileCount), queuedSaveFile);
+        downloadedZIPFileCount++;
+        assetsToSave = [savedAsset];
+        downloadedAssetSize = assetSize;
       } else {
-        savedAssetInfo = { result: result, asset: asset };
+        assetsToSave.push(savedAsset);
+        downloadedAssetSize = downloadedAssetSize + assetSize;
       }
+    }
 
-      testAndSave(savedAssetInfo);
-    };
-    var onFailure = function (asset) {
-      failedAssetList.push(asset);
-      ++failedAssetCount;
-      testAndSave();
-    };
+    if ((numberOfDownloadedAssets + numberOfFailedAssets) === assetCount) {//check for asset download completion
+      if (assetsToSave.length) {
+        saveAsZip(assetsToSave, getIndexedFileName(downloadFileName, downloadedZIPFileCount), queuedSaveFile, resolvePromise);
+      } else {
+        resolvePromise();
+      }
+    }
+  };
 
-    assets.forEach(function (asset) {
-      fetcher(asset.src, onSuccess.bind(this, asset), onFailure.bind(this, asset));
-    });
+  const onSuccess = (asset, result) => {
+    let savedAssetInfo;
+    statusCallback(++numberOfDownloadedAssets);
 
+    if (result.byteLength > maxZIPSize) { //downloading separately because of 2gb limit
+      ++numberOfLargeUnZippedAssets;
+      queuedSaveFile({
+        content: new Blob([result]),
+        downloadFileName: asset.name
+      });
+    } else {
+      savedAssetInfo = { result: result, asset: asset };
+    }
+
+    testAndSave(savedAssetInfo);
+  };
+
+  const onFailure = asset => {
+    failedAssetList.push(asset);
+    ++numberOfFailedAssets;
+    testAndSave();
+  };
+
+  assets.forEach(asset => fetcher(asset.src, onSuccess.bind(null, asset), onFailure.bind(null, asset)));
 };
-
 
 const DEFAULT_OPTIONS = {
   downloadFileName: 'zipped_files',
@@ -130,7 +100,6 @@ const DEFAULT_OPTIONS = {
   },
   onComplete: ()=> {
   },
-
 };
 
 const parseOptions = options => {
