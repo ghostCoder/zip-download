@@ -4,6 +4,7 @@ Zip-downloader can be used to download multiple files bundled into one or more z
 
 You can give zip-downloader an array of assets to download and it can download them internally and bundle them in zip(s) and download the final zip(s).
 
+Test it out here: https://ghost-coder.herokuapp.com/labs/zip-downloader
 
 ## Options that you can pass 
 
